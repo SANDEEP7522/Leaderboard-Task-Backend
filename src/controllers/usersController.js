@@ -1,10 +1,16 @@
 import { StatusCodes } from 'http-status-codes';
-import { createUserService } from '../services/usersService';
+
+import {
+  claimPointsService,
+  createUserService,
+  getAllUsersService,
+  getRankingsService
+} from '../services/usersService.js';
 import {
   customErrorResponse,
   internalErrorResponse,
   successResponse
-} from '../utils/common/responseObjects';
+} from '../utils/common/responseObjects.js';
 
 export const createUserController = async (req, res) => {
   try {
@@ -43,15 +49,16 @@ export const getAllUsersController = async (req, res) => {
   }
 };
 
-export const getUserByIdController = async (req, res) => {
+
+export const claimPointsController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await getUserByIdService(id);
+    const { userId } = req.params;
+    const { user, claimedPoints } = await claimPointsService(userId);
     return res
       .status(StatusCodes.OK)
-      .json(successResponse(user, 'User fetched successfully'));
+      .json(successResponse({ user, claimedPoints }, 'Points claimed successfully'));
   } catch (error) {
-    console.log('User controller error', error);
+    console.log('Claim points controller error', error);
     if (error.statusCode) {
       return res.status(error.statusCode).json(customErrorResponse(error));
     }
@@ -62,16 +69,14 @@ export const getUserByIdController = async (req, res) => {
   }
 };
 
-export const updateUserByIdController = async (req, res) => {
+export const getRankingsController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name } = req.body;
-    const user = await updateUserByIdService(id, name);
+    const users = await getRankingsService();
     return res
       .status(StatusCodes.OK)
-      .json(successResponse(user, 'User updated successfully'));
+      .json(successResponse(users, 'User rankings fetched successfully'));
   } catch (error) {
-    console.log('User controller error', error);
+    console.log('Get rankings controller error', error);
     if (error.statusCode) {
       return res.status(error.statusCode).json(customErrorResponse(error));
     }

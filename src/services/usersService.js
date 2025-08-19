@@ -1,12 +1,12 @@
-import User from '../schema/user.js';
+import ClaimHistory from '../schema/claimHistory.js';
+import Public from '../schema/normalUser.js';
 import ValidationError from '../utils/errors/validationError.js';
 
 export const createUserService = async (name) => {
   try {
-    const user = new User({ name });
+    const user = new Public({ name });
     return await user.save();
   } catch (error) {
-    console.log('User service error', error);
     if (error.name === 'MongoServerError' && error.code === 11000) {
       throw new ValidationError(
         { error: ['A user with the same name already exists'] },
@@ -14,12 +14,13 @@ export const createUserService = async (name) => {
       );
     }
 
+    console.log('User service error', error);
     throw error;
   }
 };
 export const getAllUsersService = async () => {
   try {
-    return await User.find().sort({ totalPoints: -1 });
+    return await Public.find().sort({ totalPoints: -1 });
   } catch (error) {
     console.log('User service error', error);
     throw new ValidationError(
@@ -29,49 +30,57 @@ export const getAllUsersService = async () => {
   }
 };
 
-// Get user by ID
-export const getUserByIdService = async (userId) => {
+export const claimPointsService = async (userId) => {
   try {
-    const user = await User.findById(userId);
+    const claimedPoints = Math.floor(Math.random() * 10) + 1;
 
-    if (!user) {
-      throw new ValidationError(
-        { error: ['User not found'] },
-        'User not found'
-      );
-    }
-
-    return user;
-  } catch (error) {
-    console.log('User service error', error);
-    throw new ValidationError(
-      { error: ['Database error occurred while fetching user'] },
-      'Database error occurred'
-    );
-  }
-};
-
-export const updateUserPointsService = async (userId, points) => {
-  try {
-    const user = await User.findByIdAndUpdate(
+    const user = await Public.findByIdAndUpdate(
       userId,
-      { $inc: { totalPoints: points } },
+      { $inc: { totalPoints: claimedPoints } },
       { new: true }
     );
 
     if (!user) {
-      throw new ValidationError(
-        { error: ['User not found'] },
-        'User not found'
-      );
+      throw new Error('User not found');
     }
 
-    return user;
+    await new ClaimHistory({
+      userId,
+      pointsClaimed: claimedPoints,
+      claimedAt: new Date()
+    }).save();
+
+    return { user, claimedPoints };
   } catch (error) {
-    console.log('User service error', error);
-    throw new ValidationError(
-      { error: ['Database error occurred while updating user points'] },
-      'Database error occurred'
-    );
+    console.log('Claim points service error', error);
+    throw error;
+  }
+};
+
+export const getRankingsService = async () => {
+  try {
+    // Get all users sorted by totalPoints descending
+    const users = await Public.find({}).sort({ totalPoints: -1 }).lean();
+
+    // Assign ranks based on sorting
+    let rank = 0;
+    let lastPoints = null;
+    let skipRank = 1;
+
+    users.forEach((user) => {
+      if (user.totalPoints !== lastPoints) {
+        rank += skipRank;
+        skipRank = 1;
+      } else {
+        skipRank++;
+      }
+      user.rank = rank;
+      lastPoints = user.totalPoints;
+    });
+
+    return users;
+  } catch (error) {
+    console.log('Get rankings service error', error);
+    throw error;
   }
 };

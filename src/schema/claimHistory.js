@@ -4,7 +4,7 @@ const claimHistorySchema = new mongoose.Schema({
 
   userId: {
     type: mongoose.Schema.Types.ObjectId,// this help to get the user details
-    ref: 'Users', // it is the name of the model
+    ref: 'Public', // it is the name of the model
     required: true, // it is required field
   },
   pointsClaimed: {
