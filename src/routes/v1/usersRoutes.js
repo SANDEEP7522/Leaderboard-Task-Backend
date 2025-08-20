@@ -6,15 +6,16 @@ import {
   getAllUsersController,
   getRankingsController,
 } from '../../controllers/usersController.js';
+import { isAuthenticated } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', createUserController);
 
-router.get('/all', getAllUsersController);
+router.get('/all', isAuthenticated, getAllUsersController);
 
-router.post('/:userId/claim', claimPointsController);
+router.post('/:userId/claim', isAuthenticated, claimPointsController);
 
-router.get('/rankings', getRankingsController);
+router.get('/rankings', isAuthenticated, getRankingsController);
 
 export default router;
