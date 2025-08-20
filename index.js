@@ -9,7 +9,7 @@ import apiRouter from './src/routes/apiRoutes.js';
 const app = express();
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: [FRONTEND_URL, 'https://leaderboard-task-eight.vercel.app'],
 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
